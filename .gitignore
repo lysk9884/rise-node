@@ -13,7 +13,6 @@ npm-debug.log
 release
 ssl/
 public/
-obj/
 stacktrace*
 test/.coverage-unit
 tmp
@@ -28,4 +27,4 @@ dist/
 .nyc_output/
 *.njsproj
 *.sln
-package-lock\.json
+obj/
