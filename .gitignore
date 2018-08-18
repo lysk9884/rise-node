@@ -27,3 +27,7 @@ dist/
 .nyc_output/
 
 package-lock\.json
+rise-ts-node.njsproj
+rise-node.sln
+rise-node.njsproj
+.vs/rise-node/v15/.suo
