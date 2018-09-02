@@ -25,7 +25,7 @@ backup.tar
 blockchain.db.gz
 dist/
 .nyc_output/
-rise-ts-node.njsproj
-rise-node.sln
-rise-node.njsproj
+*.njsproj
+*.sln
+obj/
 .vs/rise-node/v15/.suo
