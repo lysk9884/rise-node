@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import * as _ from 'lodash';
-import { Body, Get, JsonController, Put, QueryParam, QueryParams } from 'routing-controllers';
+import { BodyParam, Get, JsonController, Put, QueryParam, QueryParams } from 'routing-controllers';
 import { Op } from 'sequelize';
 import * as z_schema from 'z-schema';
 import { castFieldsToNumberUsingSchema, removeEmptyObjKeys, TransactionType } from '../helpers';
@@ -8,9 +8,9 @@ import { IoCSymbol } from '../helpers/decorators/iocSymbol';
 import { assertValidSchema, SchemaValid, ValidateSchema } from '../helpers/decorators/schemavalidators';
 import { ISlots } from '../ioc/interfaces/helpers';
 import { ITransactionLogic } from '../ioc/interfaces/logic';
-import { IAccountsModule, IBlocksModule, ITransactionsModule, ITransportModule } from '../ioc/interfaces/modules';
+import { IBlocksModule, ITransactionsModule, ITransportModule } from '../ioc/interfaces/modules';
 import { Symbols } from '../ioc/symbols';
-import { IBaseTransaction, ITransportTransaction } from '../logic/transactions';
+import { ITransportTransaction } from '../logic/transactions';
 import { TransactionsModel } from '../models';
 import schema from '../schema/transactions';
 import { APIError } from './errors';
@@ -25,8 +25,6 @@ export class TransactionsAPI {
   @inject(Symbols.helpers.slots)
   public slots: ISlots;
 
-  @inject(Symbols.modules.accounts)
-  private accountsModule: IAccountsModule;
   @inject(Symbols.modules.blocks)
   private blocksModule: IBlocksModule;
   @inject(Symbols.modules.transactions)
@@ -217,66 +215,16 @@ export class TransactionsAPI {
   }
 
   @Put()
-  @ValidateSchema()
-  public async put(
-    @SchemaValid({type: 'object', properties: { transaction: {type: 'object'}, transactions: {type: 'array', maxItems: 10}}})
-    @Body() body: {
-      transaction?: ITransportTransaction<any>,
-      transactions?: Array<ITransportTransaction<any>>
+  public async put(@BodyParam('transaction') transaction: ITransportTransaction<any>) {
+    if (!transaction) {
+      throw new APIError('Transaction not provided', 500);
     }
-  ) {
-    const { transaction } = body;
-    let { transactions }  = body;
-    if (transactions && !Array.isArray(transactions)) {
-      transactions = [];
-    }
-
-    const invalidTxsWithReasons: Array<{ id: string, reason: string }> = [];
-    const validTxsIDs                                                  = [];
-    const allTxs                                                       = [];
-    if (transaction) {
-      allTxs.push(transaction);
-    }
-    if (transactions) {
-      allTxs.push(...transactions);
-    }
-
-    const validTxs: Array<IBaseTransaction<any>>                    = [];
-    const transportTxs: { [k: string]: ITransportTransaction<any> } = {};
-    for (const tx of allTxs) {
-      try {
-        validTxs.push(this.txLogic.objectNormalize(tx));
-        transportTxs[tx.id] = tx;
-      } catch (e) {
-        // Tx is not valid.
-        invalidTxsWithReasons.push({ id: tx.id, reason: e.message });
-      }
-    }
-
-    // Validate transactions against db. this is a mechanism to avoid pollution of queues of invalid transactions.
-    // We filter them here even before we queue them
-    // NOTE: These checks are performed here and then in transactionlogic.
-    const accountsMap = await this.accountsModule.resolveAccountsForTransactions(validTxs);
-    await Promise.all(validTxs.slice().map((tx) => this.transactionsModule
-      .checkTransaction(tx, accountsMap, this.blocksModule.lastBlock.height)
-      .then(() => validTxsIDs.push(tx.id))
-      .catch((err) => {
-        // Remove from valid
-        validTxs.splice(validTxs.findIndex((t) => t.id === tx.id), 1);
-        // Add to invalid
-        invalidTxsWithReasons.push({ id: tx.id, reason: err.message });
-      }))
+    // Schema validation is done in transportModule
+    await this.transportModule.receiveTransactions(
+      [transaction],
+      null,
+      true
     );
-    if (validTxs.length > 0) {
-      // Schema validation is done in transportModule
-      await this.transportModule.receiveTransactions(
-        validTxs.map((tx) => transportTxs[tx.id]),
-        null,
-        true
-      );
-    }
-
-    return { accepted: validTxsIDs, invalid: invalidTxsWithReasons };
   }
 
   private createWhereClause(body: any) {

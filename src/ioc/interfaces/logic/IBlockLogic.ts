@@ -1,6 +1,7 @@
 import { IKeypair } from '../../../helpers';
 import {
   BlockType,
+  IBytesBlock,
   SignedAndChainedBlockType,
   SignedAndChainedTransportBlockType,
   SignedBlockType
@@ -54,4 +55,6 @@ export interface IBlockLogic {
   objectNormalize<T extends BlockType<Buffer | string>>(block: T): T;
 
   dbRead(rawBlock: RawFullBlockListType): SignedBlockType & { totalForged: string, readonly generatorId: string };
+
+  fromBytes(blk: IBytesBlock): SignedAndChainedBlockType;
 }

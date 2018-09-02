@@ -6,6 +6,7 @@ import { SignedBlockType } from '../../../logic';
 import {
   BaseTransactionType,
   IBaseTransaction,
+  IBytesTransaction,
   IConfirmedTransaction,
   ITransportTransaction
 } from '../../../logic/transactions';
@@ -116,6 +117,7 @@ export interface ITransactionLogic {
 
   dbRead(raw: any): IConfirmedTransaction<any>;
 
+  fromBytes(tx: IBytesTransaction): IBaseTransaction<any>;
   /**
    * Attach Asset object to each transaction passed
    * @param {Array<IConfirmedTransaction<any>>} txs

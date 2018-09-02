@@ -3,7 +3,7 @@ import { BaseStubClass } from '../BaseStubClass';
 import { ITransactionLogic } from '../../../src/ioc/interfaces/logic';
 import {
   BaseTransactionType,
-  IBaseTransaction,
+  IBaseTransaction, IBytesTransaction,
   IConfirmedTransaction,
   ITransportTransaction
 } from '../../../src/logic/transactions';
@@ -115,6 +115,10 @@ export default class TransactionLogicStub extends BaseStubClass implements ITran
     return null;
   }
 
+  @stubMethod()
+  public fromBytes(tx: IBytesTransaction): IBaseTransaction<any> {
+    return null;
+  }
   @stubMethod(true)
   public attachAssets(txs: Array<IConfirmedTransaction<any>>): Promise<void> {
     return Promise.resolve();

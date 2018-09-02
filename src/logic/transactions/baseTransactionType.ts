@@ -46,6 +46,13 @@ export interface IConfirmedTransaction<T> extends IBaseTransaction<T> {
   confirmations?: number;
 }
 
+export interface IBytesTransaction {
+  bytes: Buffer;
+  hasRequesterPublicKey: boolean;
+  hasSignSignature: boolean;
+  fee: number;
+}
+
 const emptyBuffer = new Buffer(0);
 
 /**
@@ -69,6 +76,13 @@ export abstract class BaseTransactionType<T, M extends Model<any>> {
 
   public getBytes(tx: IBaseTransaction<T>, skipSignature: boolean, skipSecondSignature: boolean): Buffer {
     return emptyBuffer;
+  }
+
+  /**
+   * Returns asset, given Buffer containing it
+   */
+  public fromBytes(bytes: Buffer, tx: IBaseTransaction<any>): T {
+    return null;
   }
 
   public apply(tx: IConfirmedTransaction<T>, block: SignedBlockType, sender: AccountsModel): Promise<Array<DBOp<any>>> {
